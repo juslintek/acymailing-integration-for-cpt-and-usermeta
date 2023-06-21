@@ -190,10 +190,9 @@ class plgAcymCptandusermeta extends acymPlugin
             if (!empty($parameter->datefilter) && $parameter->datefilter === 'onlynew') {
                 $lastGenerated = $this->getLastGenerated($email->id);
                 if (!empty($lastGenerated)) {
-                    $lastGeneratedDateTime = acym_escapeDB(acym_date($lastGenerated, 'Y-m-d H:i:s', false));
                     $args['date_query'][] = [
                         'column' => 'post_date_gmt',
-                        'after' => $lastGeneratedDateTime,
+                        'after' => date('Y-m-d H:i:s', $lastGenerated),
                         'inclusive' => false,
                     ];
                 }
@@ -202,10 +201,9 @@ class plgAcymCptandusermeta extends acymPlugin
             if (!empty($parameter->datefilter) && $parameter->datefilter === 'onlymodified') {
                 $lastGenerated = $this->getLastGenerated($email->id);
                 if (!empty($lastGenerated)) {
-                    $lastGeneratedDateTime = acym_escapeDB(acym_date($lastGenerated, 'Y-m-d H:i:s', false));
                     $args['date_query'][] = [
                         'column' => 'post_modified_gmt',
-                        'after' => $lastGeneratedDateTime,
+                        'after' => date('Y-m-d H:i:s', $lastGenerated),
                         'inclusive' => false,
                     ];
                 }
@@ -305,15 +303,15 @@ class plgAcymCptandusermeta extends acymPlugin
                             continue;
                         }
 
-                        if (!empty($lastGeneratedDateTime)
+                        if (!empty($lastGenerated)
                             && $parameter->datefilter === 'onlynew'
-                            && Carbon::parse($post->post_date_gmt)->isBefore(Carbon::parse($lastGeneratedDateTime))) {
+                            && Carbon::parse($post->post_date_gmt)->isBefore(Carbon::createFromTimestamp($lastGenerated))) {
                             continue;
                         }
 
-                        if (!empty($lastGeneratedDateTime)
+                        if (!empty($lastGenerated)
                             && $parameter->datefilter === 'onlymodified'
-                            && Carbon::parse($post->post_modified_gmt)->isBefore(Carbon::parse($lastGeneratedDateTime))) {
+                            && Carbon::parse($post->post_modified_gmt)->isBefore(Carbon::createFromTimestamp($lastGenerated))) {
                             continue;
                         }
 
