@@ -45,17 +45,6 @@ class plgAcymCptandusermeta extends acymPlugin
     // Not sure what this for at all, do I even need it, it throws an error when it is missing
     public function initElementOptionsCustomView(): void
     {
-        $query = 'SELECT post.*
-                    FROM #__posts AS post
-                    WHERE post.post_type = "announcement" 
-                        AND post.post_status = "publish"';
-        $element = acym_loadObject($query);
-        if (empty($element)) {
-            return;
-        }
-        foreach ($element as $key => $value) {
-            $this->elementOptions[$key] = [$key];
-        }
     }
 
     public function getPossibleIntegrations()
