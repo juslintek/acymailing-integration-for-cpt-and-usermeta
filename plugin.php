@@ -211,14 +211,7 @@ class plgAcymCptandusermeta extends acymPlugin
                 $args['posts_per_page'] = $parameter->max;
             }
 
-            $query = new WP_Query($args);
-
             $this->tags[$oneTag] = '';
-
-            // TODO: Need to figure out how not to send an email when there are no posts
-//            if (!empty($parameter->min) && $query->post_count === 0 && $send) {
-//                $this->tags[$oneTag] = $parameter->min;
-//            }
 
             if (isset($favorites) && !empty($favorites['grouped'])) {
                 if ($parameter->min >= count($favorites['all'])) {
@@ -228,44 +221,7 @@ class plgAcymCptandusermeta extends acymPlugin
                     ];
                 }
 
-                $favorites['grouped'] = array_map(static function ($group) {
-                    $items = array_map(static function ($post) {
-                        return get_post($post);
-                    }, $group);
-
-                    if (!empty($parameter->order)) {
-                        [$column, $order] = explode(',', $parameter->order);
-                        if ($column === 'rand') {
-                            shuffle($items);
-                        } else {
-                            usort($items, static function ($a, $b) use ($column, $order) {
-                                if ($order === 'asc') {
-                                    return $b->$column < $a->$column ? 1 : -1;
-                                }
-
-                                return $b->$column > $a->$column ? 1 : -1;
-                            });
-                        }
-                    }
-
-                    return $items;
-                }, $favorites['grouped']);
-
-                if (!empty($parameter->order)) {
-                    [$column, $order] = explode(',', $parameter->order);
-                    $favorites['grouped'] = array_filter($favorites['grouped']);
-                    if ($column === 'rand') {
-                        shuffle($favorites['grouped']);
-                    } else {
-                        uasort($favorites['grouped'], static function ($a, $b) use ($column, $order) {
-                            if ($order === 'asc') {
-                                return $b[0]->$column < $a[0]->$column ? 1 : -1;
-                            }
-
-                            return $b[0]->$column > $a[0]->$column ? 1 : -1;
-                        });
-                    }
-                }
+                $this->orderFavoritesByParameters($favorites, $parameter);
 
                 $contentGrouper = [];
                 foreach ($favorites['grouped'] as $groupName => $favoritesGroup) {
@@ -274,7 +230,7 @@ class plgAcymCptandusermeta extends acymPlugin
                     }
 
                     $contentGrouper[$groupName] = '<div class="grouped-block">';
-                    $contentGrouper[$groupName] .= '<h2 class="group-name">' . $groupName . '</h2>';
+                    $contentGrouper[$groupName] .= '<h1 class="group-name">' . $groupName . '</h1>';
 
                     $totalPosts = 0;
                     foreach ($favoritesGroup as $postId) {
@@ -325,6 +281,8 @@ class plgAcymCptandusermeta extends acymPlugin
 
                 $this->tags[$oneTag] = implode('<div class="grouped-block-spacer"></div>', $contentGrouper);
             } else {
+                $query = new WP_Query($args);
+
                 if ($parameter->min > $query->post_count) {
                     return [
                         'send' => false,
@@ -345,13 +303,6 @@ class plgAcymCptandusermeta extends acymPlugin
                     ])->render();
                 }
             }
-        }
-
-        if (empty($this->tags)) {
-            return [
-                'send' => false,
-                'message' => str_replace('{email}', $user->email, __('Kliento {email} sekami skelbimai neatitinka nei vieno kriterijaus siuntimui', 'mnm')),
-            ];
         }
 
         $this->pluginHelper->replaceTags($email, $this->tags, true);
@@ -422,5 +373,47 @@ class plgAcymCptandusermeta extends acymPlugin
         $favoritesByBusiness['grouped'][__('Asmeniškai sekami skelbimai', 'mnm')] = array_diff($favoritesByBusiness['all'], $groupedFavorites);
 
         return $favoritesByBusiness;
+    }
+
+    private function orderFavoritesByParameters(&$favorites, $parameter): void
+    {
+        $favorites['grouped'] = array_map(static function ($group) {
+            $items = array_map(static function ($post) {
+                return get_post($post);
+            }, $group);
+
+            if (!empty($parameter->order)) {
+                [$column, $order] = explode(',', $parameter->order);
+                if ($column === 'rand') {
+                    shuffle($items);
+                } else {
+                    usort($items, static function ($a, $b) use ($column, $order) {
+                        if ($order === 'asc') {
+                            return $b->$column < $a->$column ? 1 : -1;
+                        }
+
+                        return $b->$column > $a->$column ? 1 : -1;
+                    });
+                }
+            }
+
+            return $items;
+        }, $favorites['grouped']);
+
+        if (!empty($parameter->order)) {
+            [$column, $order] = explode(',', $parameter->order);
+            $favorites['grouped'] = array_filter($favorites['grouped']);
+            if ($column === 'rand') {
+                shuffle($favorites['grouped']);
+            } else {
+                uasort($favorites['grouped'], static function ($a, $b) use ($column, $order) {
+                    if ($order === 'asc') {
+                        return $b[0]->$column < $a[0]->$column ? 1 : -1;
+                    }
+
+                    return $b[0]->$column > $a[0]->$column ? 1 : -1;
+                });
+            }
+        }
     }
 }
