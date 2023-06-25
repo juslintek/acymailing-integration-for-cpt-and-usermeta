@@ -303,6 +303,13 @@ class plgAcymCptandusermeta extends acymPlugin
                     ])->render();
                 }
             }
+
+            if (empty($this->tags[$oneTag])) {
+                return [
+                    'send' => false,
+                    'message' => str_replace('{email}', $user->email, __('Kliento {email} sekami skelbimai neatitinka nei vieno kriterijaus siuntimui', 'mnm')),
+                ];
+            }
         }
 
         $this->pluginHelper->replaceTags($email, $this->tags, true);
